@@ -3,6 +3,8 @@ import { adminDb } from '@/lib/firebase-admin'
 import { inngest } from '@/lib/inngest'
 import type { Job } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 const YT_REGEX    = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/)|youtu\.be\/)[\w-]{11}/
 const TWITCH_REGEX = /^(https?:\/\/)?(www\.)?twitch\.tv\/.+/
 

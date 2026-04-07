@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import type { Job } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(_: Request, { params }: { params: Promise<{ jobId: string }> }) {
   try {
     const { jobId } = await params

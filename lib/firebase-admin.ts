@@ -32,10 +32,14 @@ const initializeFirebase = () => {
  * Exporta o Firestore admin usando um Proxy para inicialização preguiçosa (Lazy).
  * Suporta chaves em JSON puro ou Base64.
  */
+export const dynamic = 'force-dynamic'
+
 export const adminDb = new Proxy({} as admin.firestore.Firestore, {
   get(target, prop) {
     initializeFirebase();
-    if (!admin.apps.length) return undefined;
+    if (!admin.apps.length) {
+      return undefined;
+    }
     const db = admin.firestore();
     return (db as any)[prop];
   },
