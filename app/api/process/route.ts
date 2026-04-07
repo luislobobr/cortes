@@ -46,6 +46,15 @@ export async function POST(request: Request) {
     // 2. Dispara o evento para o Inngest (Background Processor)
     // Isso evita o timeout de 10s do Vercel Free.
     console.log('[API Process] Enviando evento para Inngest:', jobRef.id);
+    
+    if (!process.env.INNGEST_EVENT_KEY) {
+      throw new Error('A variável INNGEST_EVENT_KEY está vazia ou não foi definida na Vercel para Produção.');
+    }
+
+    if (process.env.INNGEST_EVENT_KEY.trim() === 'YOUR_INNGEST_EVENT_KEY') {
+      throw new Error('A variável INNGEST_EVENT_KEY ainda está com o valor padrão "YOUR_INNGEST_EVENT_KEY".');
+    }
+
     await inngest.send({
       name: "video/process",
       data: {
