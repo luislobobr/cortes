@@ -37,7 +37,7 @@ export function getThumbnailUrl(publicId: string, startOffset: number): string {
 }
 
 /**
- * Upload de vídeo via URL remota (sem baixar localmente).
+ * Upload de vídeo via URL remota ou Stream do YouTube.
  * Retorna o publicId no Cloudinary.
  */
 export async function uploadVideoFromUrl(videoUrl: string, jobId: string): Promise<string> {
@@ -49,6 +49,27 @@ export async function uploadVideoFromUrl(videoUrl: string, jobId: string): Promi
     api_secret: process.env.CLOUDINARY_API_SECRET,
   })
 
+  // Se for YouTube, fazemos streaming do vídeo diretamente para o Cloudinary (evita erro de IP e memória)
+  if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be') || videoUrl.includes('shorts')) {
+    const ytdl = (await import('@distube/ytdl-core')).default;
+    
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { resource_type: 'video', public_id: `cortes/${jobId}`, overwrite: true },
+        (error, result) => {
+          if (error) reject(new Error('Erro no Cloudinary: ' + error.message));
+          else resolve(result!.public_id);
+        }
+      );
+      
+      // Conecta o download do YouTube diretamente ao upload do Cloudinary
+      ytdl(videoUrl, { quality: 'highest', filter: 'audioandvideo' })
+        .on('error', (err) => reject(new Error('Erro no ytdl-core: ' + err.message)))
+        .pipe(stream);
+    });
+  }
+
+  // Fallback para outras URLs diretas (como Twitch clipe direto ou MP4)
   const result = await cloudinary.uploader.upload(videoUrl, {
     resource_type: 'video',
     public_id:     `cortes/${jobId}`,
