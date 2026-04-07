@@ -10,15 +10,19 @@ const initializeFirebase = () => {
       try {
         console.log('[Firebase] Iniciando inicialização...');
         
-        // Verifica se é Base64 (não começa com '{') e decodifica se necessário
-        if (!serviceAccountKey.trim().startsWith('{')) {
-          console.log('[Firebase] Detectado formato Base64.');
-          serviceAccountKey = Buffer.from(serviceAccountKey, 'base64').toString('utf-8');
+        let decodedStr = serviceAccountKey;
+
+        // Verifica se é Base64 (não começa com '{') e decodifica
+        if (!decodedStr.trim().startsWith('{')) {
+          decodedStr = Buffer.from(decodedStr, 'base64').toString('utf-8');
         }
 
-        const serviceAccount = JSON.parse(serviceAccountKey);
+        // Sanitiza caracteres de controle (como quebras de linha reais) que quebram o JSON.parse
+        decodedStr = decodedStr.replace(/\n/g, '\\n').replace(/\r/g, '');
+
+        const serviceAccount = JSON.parse(decodedStr);
         
-        // Trata quebras de linha na chave privada
+        // Se a chave privada veio com as barras duplas, volta para quebra de linha real
         if (serviceAccount.private_key) {
           serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
         }
