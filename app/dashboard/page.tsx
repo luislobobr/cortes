@@ -12,6 +12,7 @@ const DONE_STATES: JobStatus[] = ['done', 'error']
 
 export default function DashboardPage() {
   const [job,     setJob]    = useState<Job | null>(null)
+  const [error,   setError]  = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const pollRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -39,6 +40,7 @@ export default function DashboardPage() {
   const handleSubmit = useCallback(async (url: string) => {
     setLoading(true)
     setJob(null)
+    setError(null)
     stopPolling()
 
     try {
@@ -54,11 +56,10 @@ export default function DashboardPage() {
                progress: 0, statusMessage: 'Iniciando…', clips: [],
                createdAt: Date.now(), updatedAt: Date.now() })
       startPolling(data.jobId)
-    } catch (err) {
+    } catch (err: any) {
       setLoading(false)
-      setJob(prev => prev ? {
-        ...prev, status: 'error', statusMessage: String(err)
-      } : null)
+      setError(err.message || 'Ocorreu um erro inesperado.')
+      console.error('Erro:', err)
     }
   }, [startPolling, stopPolling])
 
@@ -102,6 +103,13 @@ export default function DashboardPage() {
         <UrlInput onSubmit={handleSubmit} loading={loading} />
 
         {/* Processing status */}
+        {error && (
+          <div className="mt-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm animate-fade-in flex items-center gap-3">
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            {error}
+          </div>
+        )}
+
         {job && !showResults && (
           <ProcessingStatus
             status={job.status}

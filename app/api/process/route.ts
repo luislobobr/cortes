@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     }
 
     // 1. Cria o job no Firestore para polling do frontend
+    // O adminDb usa um Proxy para inicializar o Firebase apenas quando necessário
     const jobRef = adminDb.collection('jobs').doc()
     const job: Job = {
       id:            jobRef.id,
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
 
     // 2. Dispara o evento para o Inngest (Background Processor)
     // Isso evita o timeout de 10s do Vercel Free.
+    console.log('[API Process] Enviando evento para Inngest:', jobRef.id);
     await inngest.send({
       name: "video/process",
       data: {
@@ -53,9 +55,11 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ jobId: jobRef.id, status: 'pending' })
-  } catch (err) {
-    console.error('[/api/process]', err)
-    return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
+  } catch (error: any) {
+    console.error('[API Process] Erro crítico:', error);
+    return NextResponse.json(
+      { error: `Erro ao iniciar processamento: ${error.message || 'Erro desconhecido'}` },
+      { status: 500 }
+    )
   }
 }
-
